@@ -1,0 +1,30 @@
+#! /bin/sh
+
+function make-html {
+infile=$1; shift;
+outfile=$1; shift;
+
+echo "<html xmlns=\"http://www.w3.org/1999/xhtml\" xml:lang=\"ru\" lang=\"ru\">
+<head>
+  <meta http-equiv=\"content-type\" content=\"text/html; charset=utf-8\" />
+  <title>TDD Book. Sergey Borisov</title>
+</head>
+<body>
+
+" > $outfile
+
+markdown $infile >> $outfile
+
+echo "
+</body>
+</html>
+"  >> $outfile
+}
+
+function process-file {
+basefilename=$1; shift;
+
+make-html ${basefilename}.md ${basefilename}.html
+}
+
+process-file plan
