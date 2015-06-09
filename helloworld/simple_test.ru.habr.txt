@@ -1,0 +1,340 @@
+В очередной раз упражняясь в практике TDD на Java я создал небольшой учебный проект, в котором показал, что если тесты проходят, то это еще не значит, что код выполняется правильно. На самом деле, разработка модульных тестов, в которых учитываются различные варианты входных данных это кропотливая работа. Для решения возникшей проблемы нашел для себя библиотеку junit-quickcheck, опытом использования которой спешу поделиться. 
+
+К слову, на хабре про эту библиотеку уже есть <a href="http://habrahabr.ru/post/240811/">отличная статья</a>.
+<habracut />
+
+<h2>Первые шаги</h2>
+
+Итак, я создал новый пустой проект на Java и сделал сборочный скрипт. У меня сборка данного проекта происходит при помощи gradle. Вы можете посмотреть мой учебный проект <a href="https://github.com/risik/tdd-book-java/tree/feature/helloworld">здесь</a>. Начиная вот с этого коммита: d9bd97eaec20427e725f9a4c3ff0c0d36cc27ea3 проект уже готов для сборки и реализации нашего тестового примера.
+
+Теперь я должен начать писать код следуя практики TDD. Некоторые апологеты TDD считают, следует начинать разработку класса с написания теста для этого класса. Но здесь я бы с ними поспорил. Моя IDE (IntelliJ IDEA) умеет генерировать тесты при наличии готового класса, поэтому я начну разработку с <a href="https://github.com/risik/tdd-book-java/commit/0490415ecfea58fb0a75e4b96f90c958dc960834">создания пустого класса</a>:
+<source lang="java">
+public class HelloSayer {
+}
+</source>
+
+Здесь и далее код иллюстрируется ссылками на коммит на github.
+
+А вот теперь я попрошу свою IDE создать мне тест и далее начну работать по схеме test-first. Первый тест, который я сделаю, это очень простой тест, при помощи которого я просто создаю новый объект. Я хочу указывать с кем нужно поздороваться в конструкторе. Более того, я считаю, что объект выдающий приветствие может выдавать это приветствие, только одному. Поэтому, конструктора без параметра у этого класса не будет.
+<a href="https://github.com/risik/tdd-book-java/commit/8162299f8fe6a8d924a173ac12479c6dd3d74cc0">Вот</a> созданный мною первый тест:
+<source lang=java>
+    @Test
+    public void testCreating() throws Exception {
+        new HelloSayer("World");
+    }
+</source>
+Обратите внимание, что в этой точке проект не компилируется, то есть, тест красный.
+
+Ну сделаю тест зеленым. Моя IDE умеет создавать методы класса (в том числе, конструкторы), которые я уже использую, как в созданном тесте, но еще не реализовал. При помощи одной комбинации клавиш генерирую <a href="https://github.com/risik/tdd-book-java/commit/26dbbd25542d7b0ccbdbac3b99908c90a30ef535">этот конструктор</a> и получаю зеленый тест:
+<source lang=java>
+public class HelloSayer {
+   public HelloSayer(String whom) {
+   }
+}</source>
+
+Обратите внимание, что тест, конечно, проходит, но фактически, мой класс не делает того, что я от него хотел. Работаем дальше.
+
+<a href="https://github.com/risik/tdd-book-java/commit/9496ef269cc034f3843334a0159c9c3de133782b">Создаю тест</a> для метода <b>getWhom</b> - это геттер, при помощи которого я смогу узнать кому этот объект будет выдавать приветствие:
+<source lang=java>
+    @Test
+    public void testWhomGetter() throws Exception {
+        HelloSayer sayer = new HelloSayer("World");
+        assertEquals("World", sayer.getWhom());
+    }
+</source>
+Проект опять не компилируется, то есть, тест опять красный. 
+
+Продолжим. 
+<a href="https://github.com/risik/tdd-book-java/commit/d8ae54fa2446d8147876093501294400e87f0d4fm/risik/tdd-book-java/commit/d8ae54fa2446d8147876093501294400e87f0d4f">Реализую</a> требуемый геттер:
+<source lang=java>
+public class HelloSayer {
+    private String whom;
+
+    public HelloSayer(String whom) {
+    }
+
+    public String getWhom() {
+        return whom;
+    }
+ }
+</source>
+Проект уже компилируется, но тест не проходит. Для того, чтобы тест проходил, нам теперь придется и конструктор <a href="https://github.com/risik/tdd-book-java/commit/c1b924524f25547f58958ac3f663a5edb19bab98">реализовать</a> по-настоящему, а не так, как это я сделал раньше:
+<source lang=java>
+     public HelloSayer(String whom) {
+        this.whom = whom;
+     }
+</source>
+Тест опять зеленый.
+
+Маленькое, но важное пояснение. В этом учебном примере я делаю коммиты в репозитарий очень часто. Это я делаю для того, чтобы показать читателю последовательность моих шагов. Делать коммиты настолько часто в реальном проекте не обязательно.
+Хотя я сторонник того, чтобы коммит был "атомарным". Что такое атомарный коммит, можно почитать, например, здесь: http://seesparkbox.com/foundry/atomic_commits_with_git. Крато говоря: до тех пор, пока Вы можете сформулировать, что именно Вы сделали, одним предложением это атомарный коммит.
+
+<h2>Зеленый тест с неправильной реализацией</h2>
+
+Ну теперь, реализуем основной метод данного класса: получение приветственного сообщения. 
+<a href="https://github.com/risik/tdd-book-java/commit/1afad7d25045fbd2ca2d3619b57abedaebca242a">Вот</a> этот тест:
+<source lang=java>
+    @Test
+    public void testGreetingString() throws Exception {
+        HelloSayer sayer = new HelloSayer("World");
+        assertEquals("Hello \"World\"", sayer.getGreetingString());
+    }
+</source>
+Я ожидаю, что тот, к кому мой говоритель приветствий обращается, возьмет имя в кавычки. Тест красный. 
+
+<a href="https://github.com/risik/tdd-book-java/commit/507011ce6e0fd13425d43e5fe30a0aac133e2999">Реализуем</a> требуемый метод:
+<source lang=java>
+    public String getGreetingString() {
+        return "Hello \"World\"";
+    }
+</source>
+Тест зеленый. Я добился прохождения теста очень просто! Кстати, при реализации метода <b>getWhom</b> я мог сделать также, но в тот раз я сделал все по честному, а здесь поленился.
+
+Итак, у нас проблема: тесты все проходят, но класс делает совсем не то, что нам надо. Здесь можно возразить: маловероятно, что такая проблема может возникнуть в реальной жизни, а не в учебном проекте. В действительности, модульные тесты обычно разрабатываются тем же человеком, что пишет функциональность. Поэтому, было бы очень странно, если бы этот человек, написал реализацию метода, которая настолько не соответствует требованиям. Но, во вторых, есть случаи, когда тесты и функциональность пишут все же разные люди. А во первых, бывают гораздо более сложные случаи, когда разработчик может просто не предусмотреть все возможные варианты входных данных в тестах.
+
+На самом деле, для того, что бы избежать такой некорректной реализации достаточно было бы сделать второй тест с другой строкой <b>whom</b>. Но я попытаюсь решить этот вопрос для максимально общего случая. Решение задачи в общем виде требует использовать множество различных строк. То есть, надо проводить тест не на одной строке "World", как я это сделал, а на разных строках.
+
+Для решения проблемы в общем виде я использовал стороннюю библиотеку junit-quickcheck: https://github.com/pholser/junit-quickcheck, которая построена на базе Theories из JUnit. <a href="https://github.com/risik/tdd-book-java/commit/7ca99ae3866cfef0ba926965e34f7f925e7a24ad">Подключаю</a> ее к моему проекту.
+<source lang="diff">
+     dependencies {
+         testCompile 'junit:junit:4.+'
++        testCompile 'com.pholser:junit-quickcheck-core:0.5+'
++        testCompile 'com.pholser:junit-quickcheck-generators:0.5+'
+     }
+
+</source>
+На момент написания статьи версия 0.5, которую я здесь использую, имеет статус alpha, но в ней заявлена поддержка Java 8, которую я использую для этого проекта.
+
+Используя эту библиотеку я <a href="https://github.com/risik/tdd-book-java/commit/17016c6f4bceee4911623af2d608f07ca750ee11">реализовал</a> заново тестовой метод для проверки метода <b>greetingString</b>:
+<source lang="java">
+    @Theory
+    public void greetingString(
+            @ForAll String whom
+    ) {
+        HelloSayer sayer = new HelloSayer(whom);
+        assertEquals(String.format("Hello \"%s\"", whom), sayer.getGreetingString());
+    }
+</source>
+Разберемся что делает этот код. Аннотация @Theory при методе указывает, что это параметризованный тестовый метод, построенный на базе therories. Аннотация @ForAll показывает, что данный параметр будет генерируемый. junit-quickcheck из коробки умеет генерировать значения для многих типов данных, в том числе и для строк.
+
+Запускаем тест и теперь он красный, как нам и надо. Теперь <a href="https://github.com/risik/tdd-book-java/commit/e32647c04c63c71fec89aaf1c45c7708ce681110">исправлю</a> мою реализацию метода <b>getGreetingString</b>:
+<source lang="java">
+    public String getGreetingString() {
+        return String.format("Hello \"%s\"", whom);
+    }
+</source>
+Теперь тест зеленый и реализация, на самом деле, такая, как должна была бы быть. Рекомендую поставить точку останова и проследить, какие параметры передаются в этот метод. Я бы таких строк не придумал. :)
+
+Следующим шагом я <a href="https://github.com/risik/tdd-book-java/commit/154d02f4902773a25644a3494f315b2485892829">переписал</a> все тесты с использованием генерации строк.
+Вообще говоря, это тоже спорный вопрос. Возможно следовало оставит простой тест, с простой, понятной строкой. Если Вам придется отлаживать Ваш код, (например, если на какой-то специфичной входной строке Вы получаете неожиданное поведение) то удобнее было бы иметь простой тест. Отлаживать реализацию с генератором не очень просто, так как код теста вызывается многократно. Намного проще реализовать просто тест, который использует строго фиксированную, нужную Вам строку. Но я, все же заменил все тесты на тесты с генерируемыми параметрами.
+
+Маленький завершающий штришек этого раздела, я <a href="https://github.com/risik/tdd-book-java/commit/44e31d9ee304989d16bc3bff6bb324c56d0cd205">добавил</a> к своему проекту контроль покрытия кода. Использую для этого Jacoco. Прогоняю, смотрю отчет и радуюсь 100% покрытию кода.
+
+<h2>Тестирование разных реализаций</h2>
+
+Теперь начинаем развивать наш "очень важный" класс <b>HelloSayer</b>. Мне не очень нравится его реализация.
+А конкретно, мне не нравится String.format при каждом вызове метода <b>getGreetingString</b>. Однако, есть ситуации, когда это будет ОК, а есть ситуации когда меня это не будет устраивать.
+
+Поэтому, я вынесу интерфейс HelloSayer и сделаю несколько его реализаций. Здесь я опять воспользовался возможностями IntelliJ IDEA по рефакторингу. <a href="https://github.com/risik/tdd-book-java/commit/8d77fe55d427566e33403353177b4f76be78c6c7">Вот</a> что у меня получилось в результате. Теперь HelloSayer стал интерфейсом, а реализация, которая там была ушла в класс HelloSayerInplace.
+<spoiler title="Интерфейс и реализация">
+
+Интерфейс:
+<source lang="java">
+package info.risik.books.tdd.HelloWorld;
+
+public interface HelloSayer {
+    String getWhom();
+ 
+    String getGreetingString();
+}
+</source>
+
+Реализация:
+<source lang="java">
+package info.risik.books.tdd.HelloWorld;
+
+public class HelloSayerInplace implements HelloSayer {
+    private String whom;
+
+    public HelloSayerInplace(String whom) {
+        this.whom = whom;
+    }
+
+    @Override
+    public String getWhom() {
+        return whom;
+    }
+
+    @Override
+    public String getGreetingString() {
+        return String.format("Hello \"%s\"", whom);
+    }
+}
+</source>
+</spoiler>
+
+А теперь сделаю еще одну реализацию этого интерфейса, которая создает строку приветствия прямо в конструкторе и хранит ее в объекте. Тест я тоже <a href="https://github.com/risik/tdd-book-java/commit/66641409f1594b370d8b561ba6896615f391231b">реализовал</a>, спасибо копировать-и-вставить и поиск-и-замена:
+<spoiler title="Еще одна реализация итерфейса">
+Реализация класса <b>HelloSayerAtOnce</b>.
+<source lang="java">
+package info.risik.books.tdd.HelloWorld;
+
+public class HelloSayerAtOnce implements HelloSayer {
+    private String whom;
+    private String message;
+
+    public HelloSayerAtOnce(String whom) {
+        this.whom = whom;
+        this.message = String.format("Hello \"%s\"", whom);
+    }
+
+    @Override
+    public String getWhom() {
+        return whom;
+    }
+
+    @Override
+    public String getGreetingString() {
+        return message;
+    }
+}
+</source>
+
+Модульный тест для него:
+<source lang="java">
+package info.risik.books.tdd.HelloWorld;
+
+import com.pholser.junit.quickcheck.ForAll;
+import junit.framework.TestCase;
+import org.junit.contrib.theories.Theories;
+import org.junit.contrib.theories.Theory;
+import org.junit.runner.RunWith;
+
+@RunWith(Theories.class)
+public class HelloSayerAtOnceTest extends TestCase {
+
+    @Theory
+    public void testCreating(
+            @ForAll String whom
+    ) {
+        new HelloSayerAtOnce(whom);
+    }
+
+    @Theory
+    public void testWhomGetter(
+            @ForAll String whom
+    ) {
+        HelloSayer sayer = new HelloSayerAtOnce(whom);
+        assertEquals(whom, sayer.getWhom());
+    }
+
+    @Theory
+    public void greetingString(
+            @ForAll String whom
+    ) {
+        HelloSayer sayer = new HelloSayerAtOnce(whom);
+        assertEquals(String.format("Hello \"%s\"", whom), sayer.getGreetingString());
+    }
+}
+</source>
+</spoiler>
+
+Здесь есть проблема. Я хочу еще третью реализацию этого же интерфейса, и соответственно, мне придется сделать третий тестовый класс, опять через тот же механизм копировать-и-вставить и поиск-и-замена. Это плохо. Все классы, реализующие этот интерфейс, независимо от того, как именно они реализованы внутри, должны выполнять одно и то же соглашение, которое я уже описал в тесте. Я хочу соблюдать принцип DRY (don't repeat youself). То есть, я хочу применить один и тот же тест ко всем возможным реализациям этого интерфейса.
+
+Здесь мне на помощь опять пришел junit-quickchecker. <a href="https://github.com/risik/tdd-book-java/commit/68c287eebe96b5279e581dbf75236f3998a65101">Вот</a> модифицированный тест:
+<source lang="java">
+@RunWith(Theories.class)
+public class HelloSayerTest {
+
+    enum HelloSayerType {
+        InPlace,
+        AtOnce,
+    }
+
+//...
+    @Theory
+    public void testWhomGetter(
+            @ForAll String whom,
+            @ForAll @ValuesOf HelloSayerType sayerType
+    ) throws Exception {
+        HelloSayer sayer = getFactory(sayerType, whom);
+        assertEquals(whom, sayer.getWhom());
+    }
+//...
+    private HelloSayer getFactory(HelloSayerType type, String whom) throws Exception {
+        switch (type) {
+            case InPlace:
+                return new HelloSayerInplace(whom);
+            case AtOnce:
+                return new HelloSayerAtOnce(whom);
+        }
+        throw new Exception("Unknown HelloSayerType");
+    }
+}
+</source>
+
+Я добавил один генерируемый параметр в тестовый метод: тип класса (в виде перечисления). Перечисления в junit-checker поддерживаются из коробки. Для этого мне нужно всего лишь добавить аннотацию @ValuesOf. И, фактически, все что мне нужно было сделать, это метод для создания экземпляра одного из классов. 
+
+<a href="https://github.com/risik/tdd-book-java/commit/ecea8e643e9e2bd379b573c5d762405892b891e9">Перереализую</a> все тестовые методы с помощью такого параметра. Отдельный тестовый класс для нового класса мне теперь больше не нужен, <a href="https://github.com/risik/tdd-book-java/commit/b4092eb73177e1efeef6e4cf8c0d888539c393df">удаляю</a> его.
+
+И на закуску, <a href="https://github.com/risik/tdd-book-java/commit/50eada1752aacca71b92ea2ae30655fd338a6b60">реализую</a> третий вариант HelloSayer:
+<spoiler title="Реализация HelloSayer с ленивой инициализацией строки">
+<source lang="java">
+package info.risik.books.tdd.HelloWorld;
+
+public class HelloSayerLazy implements HelloSayer {
+    private String whom;
+    private String message;
+
+    public HelloSayerLazy(String whom) {
+        this.whom = whom;
+        this.message = null;
+    }
+
+    @Override
+    public String getWhom() {
+        return whom;
+    }
+
+    @Override
+    public String getGreetingString() {
+        if (message == null) {
+            makeMessage();
+        }
+        return message;
+    }
+
+    private void makeMessage() {
+        message = String.format("Hello \"%s\"", whom);
+    }
+}
+</source>
+</spoiler>
+
+Теперь для реализации всех тестов для этого класса мне нужно <a href="https://github.com/risik/tdd-book-java/commit/5a50b25dd6fb20df1b47b21f72b937197ac37cc7">добавить</a> только 3 строки:
+<source lang="diff">
+     enum HelloSayerType {
+         InPlace,
+         AtOnce,
++        Lazy,
+     }
+ 
+     @Theory
+ @@ -53,6 +54,8 @@ private HelloSayer getFactory(HelloSayerType type, String whom) throws Exception
+                 return new HelloSayerInplace(whom);
+             case AtOnce:
+                 return new HelloSayerAtOnce(whom);
++            case Lazy:
++                return new HelloSayerLazy(whom);
+         }
+         throw new Exception("Unknown HelloSayerType");
+     }
+</source>
+
+Проверю, что покрытие кода все еще 100%. Все отлично!
+
+<h2>Ссылки и прочая необходимая информация</h2>
+Тестовые примера на Java: https://github.com/risik/tdd-book-java
+Текст оригинальной статьи: https://github.com/risik/tdd-book/blob/master/helloworld/simple_test.ru.md
+Текст статьи, подготовленной для habrahabr.ru: 
+Лицензия: <a href="https://github.com/risik/tdd-book/blob/master/helloworld/simple_test.ru.md">CC-BY-NC-SA</a>
