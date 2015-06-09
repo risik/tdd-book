@@ -336,5 +336,5 @@ public class HelloSayerLazy implements HelloSayer {
 <h2>Ссылки и прочая необходимая информация</h2>
 Тестовые примера на Java: https://github.com/risik/tdd-book-java
 Текст оригинальной статьи: https://github.com/risik/tdd-book/blob/master/helloworld/simple_test.ru.md
-Текст статьи, подготовленной для habrahabr.ru: 
+Текст статьи, подготовленной для habrahabr.ru: https://github.com/risik/tdd-book/blob/master/helloworld/simple_test.ru.habr.txt
 Лицензия: <a href="https://github.com/risik/tdd-book/blob/master/helloworld/simple_test.ru.md">CC-BY-NC-SA</a>
