@@ -8,7 +8,7 @@ LICENSE
   Test-Driven Development in practice
 </span> 
 by 
-<a xmlns:cc="http://creativecommons.org/ns#" href="http://books.risik.info/tdd" property="cc:attributionName" rel="cc:attributionURL">
+<a xmlns:cc="http://creativecommons.org/ns#" href="https://risik.info/?page_id=956" property="cc:attributionName" rel="cc:attributionURL">
   Sergey Borisov (AKA risik)
 </a> 
 is licensed under a 
